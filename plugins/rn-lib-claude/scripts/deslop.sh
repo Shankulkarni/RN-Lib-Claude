@@ -33,7 +33,7 @@ CRITICAL=0
 MEDIUM=0
 LOW=0
 
-echo "🔍 RN-Claude Deslop Scanner"
+echo "🔍 RN-Lib-Claude Deslop Scanner"
 echo "Target: $TARGET"
 echo "================================"
 

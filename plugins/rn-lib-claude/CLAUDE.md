@@ -1,4 +1,4 @@
-# RN-Claude — Global Rules
+# RN-Lib-Claude — Global Rules
 
 These rules apply to every React Native library in this ecosystem.
 

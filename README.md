@@ -1,11 +1,11 @@
-# RN-Claude
+# RN-Lib-Claude
 
 Claude Code plugin for building React Native libraries targeting **New Architecture (RN 0.76+)**.
 
 ```
 claude plugin marketplace add <source>
-claude plugin install rn-claude
-/rn-claude:setup
+claude plugin install rn-lib-claude
+/rn-lib-claude:setup
 ```
 
 ---
@@ -47,9 +47,9 @@ claude plugin install rn-claude
 
 | Command | Action |
 |---|---|
-| `/rn-claude:setup` | Sync conventions to `~/.claude/CLAUDE.md` |
-| `/rn-claude:update` | Re-sync updated conventions |
-| `/rn-claude:uninstall` | Remove conventions |
+| `/rn-lib-claude:setup` | Sync conventions to `~/.claude/CLAUDE.md` |
+| `/rn-lib-claude:update` | Re-sync updated conventions |
+| `/rn-lib-claude:uninstall` | Remove conventions |
 | `/scaffold [name]` | Create new library |
 | `/publish` | Pre-publish checks + npm publish |
 | `/deslop [path]` | Scan for slop patterns |
@@ -82,7 +82,7 @@ claude plugin install rn-claude
 
 ## Adding a Skill
 
-1. Create `plugins/rn-claude/skills/<name>/SKILL.md` with frontmatter:
+1. Create `plugins/rn-lib-claude/skills/<name>/SKILL.md` with frontmatter:
    ```yaml
    ---
    name: my-skill
@@ -93,7 +93,7 @@ claude plugin install rn-claude
 
 ## Adding an Agent
 
-1. Create `plugins/rn-claude/agents/<name>.md` under 80 lines:
+1. Create `plugins/rn-lib-claude/agents/<name>.md` under 80 lines:
    ```yaml
    ---
    name: My Agent

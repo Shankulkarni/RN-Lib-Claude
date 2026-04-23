@@ -16,7 +16,7 @@ check() {
   fi
 }
 
-echo "📦 RN-Claude Pre-Publish Checks"
+echo "📦 RN-Lib-Claude Pre-Publish Checks"
 echo "================================"
 echo ""
 

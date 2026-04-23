@@ -1,5 +1,5 @@
 ---
-description: Remove RN-Claude conventions from ~/.claude/CLAUDE.md.
+description: Remove RN-Lib-Claude conventions from ~/.claude/CLAUDE.md.
 ---
 
 Run the teardown script:
