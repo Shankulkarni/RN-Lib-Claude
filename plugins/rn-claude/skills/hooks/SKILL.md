@@ -1,6 +1,6 @@
 ---
 name: hooks
-description: "Use when building custom React hooks or utility functions for a React Native library — worklet-safe patterns, TypeScript generics, cleanup, and headless logic."
+description: "Use when building custom React hooks or utility functions for a React Native library — worklet-safe patterns, TypeScript generics, memory leak prevention, state minimization, and stable callbacks."
 ---
 
 # Hooks + Utilities
@@ -10,71 +10,197 @@ description: "Use when building custom React hooks or utility functions for a Re
 ```ts
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type UseMyHookOptions = {
+type UseCounterOptions = {
   initialValue?: number
+  min?: number
+  max?: number
   onChange?: (value: number) => void
 }
 
-type UseMyHookResult = {
+type UseCounterResult = {
   value: number
   increment: () => void
+  decrement: () => void
   reset: () => void
 }
 
-function useMyHook({ initialValue = 0, onChange }: UseMyHookOptions = {}): UseMyHookResult {
+function useCounter({
+  initialValue = 0,
+  min = -Infinity,
+  max = Infinity,
+  onChange,
+}: UseCounterOptions = {}): UseCounterResult {
   const [value, setValue] = useState(initialValue)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
 
   const increment = useCallback(() => {
     setValue(prev => {
-      const next = prev + 1
+      const next = Math.min(prev + 1, max)
       onChangeRef.current?.(next)
       return next
     })
-  }, [])
+  }, [max])
 
-  const reset = useCallback(() => {
-    setValue(initialValue)
-  }, [initialValue])
+  const decrement = useCallback(() => {
+    setValue(prev => {
+      const next = Math.max(prev - 1, min)
+      onChangeRef.current?.(next)
+      return next
+    })
+  }, [min])
 
-  return { value, increment, reset }
+  const reset = useCallback(() => setValue(initialValue), [initialValue])
+
+  return { value, increment, decrement, reset }
 }
 
-export { useMyHook }
-export type { UseMyHookOptions, UseMyHookResult }
+export { useCounter }
+export type { UseCounterOptions, UseCounterResult }
 ```
 
-## Key Patterns
+---
 
-### Stable callbacks — use ref pattern
-```ts
-const callbackRef = useRef(callback)
-callbackRef.current = callback
-// Then call callbackRef.current?.() — never add callback to deps
+## State Patterns
+
+### Minimize state — derive during render
+```tsx
+// ❌ Redundant state — derived from other state
+const [items, setItems] = useState<Item[]>([])
+const [count, setCount] = useState(0)       // ← derived from items.length
+const [isEmpty, setIsEmpty] = useState(true) // ← derived from items.length === 0
+
+// ✅ Derive during render — single source of truth
+const [items, setItems] = useState<Item[]>([])
+const count = items.length           // derived
+const isEmpty = items.length === 0   // derived
 ```
 
-### Cleanup always
-```ts
+### Dispatch updaters for state depending on previous value
+```tsx
+// ❌ Stale closure — value may be outdated
+const increment = () => setValue(value + 1)
+
+// ✅ Updater function — always has latest value
+const increment = useCallback(() => setValue(prev => prev + 1), [])
+```
+
+### `undefined` initial state with nullish coalescing
+```tsx
+// ❌ null initial — can't distinguish "unset by user" from "not yet loaded"
+const [theme, setTheme] = useState<'light' | 'dark' | null>(null)
+
+// ✅ undefined initial — nullish coalescing gives reactive fallback
+const [theme, setTheme] = useState<'light' | 'dark' | undefined>(undefined)
+const resolvedTheme = theme ?? systemTheme  // fallback to system, override when set
+```
+
+---
+
+## Memory Leak Prevention — Always Clean Up
+
+```tsx
+// ❌ Leaked subscription
 useEffect(() => {
-  const subscription = SomeAPI.subscribe(handler)
-  return () => subscription.remove()
+  const sub = EventEmitter.addListener('change', handler)
+  // missing cleanup → leak on unmount
 }, [])
+
+// ✅ Always return cleanup
+useEffect(() => {
+  const sub = EventEmitter.addListener('change', handler)
+  return () => sub.remove()
+}, [])
+
+// ✅ Timer cleanup
+useEffect(() => {
+  const id = setInterval(tick, 1000)
+  return () => clearInterval(id)
+}, [])
+
+// ✅ Abort fetch on unmount
+useEffect(() => {
+  const controller = new AbortController()
+  fetch(url, { signal: controller.signal }).then(setData).catch(() => {})
+  return () => controller.abort()
+}, [url])
 ```
 
-### Generics
-```ts
-function useList<T>(initial: T[] = []): { items: T[]; add: (item: T) => void; remove: (index: number) => void } {
-  const [items, setItems] = useState<T[]>(initial)
-  const add = useCallback((item: T) => setItems(prev => [...prev, item]), [])
-  const remove = useCallback((index: number) => setItems(prev => prev.filter((_, i) => i !== index)), [])
-  return { items, add, remove }
+---
+
+## High-Frequency Values — Use `useRef` not `useState`
+
+```tsx
+// ❌ Scroll position in useState — causes re-render on every scroll event
+const [scrollY, setScrollY] = useState(0)
+const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  setScrollY(e.nativeEvent.contentOffset.y) // fires 60x/sec → 60 re-renders/sec
+}
+
+// ✅ useRef — no re-render, track for logic use
+const scrollY = useRef(0)
+const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  scrollY.current = e.nativeEvent.contentOffset.y
+}, [])
+
+// ✅ useSharedValue — if driving animation (see animations skill)
+const scrollY = useSharedValue(0)
+```
+
+---
+
+## Stable Callback Ref Pattern
+
+Prevents stale closures without adding callback to deps array:
+
+```tsx
+function useEventCallback<T extends (...args: never[]) => unknown>(fn: T): T {
+  const ref = useRef(fn)
+  ref.current = fn
+  return useCallback((...args: Parameters<T>) => ref.current(...args), []) as T
+}
+
+// Usage
+function useMyHook({ onComplete }: { onComplete?: (result: string) => void }) {
+  const handleComplete = useEventCallback(onComplete ?? (() => {}))
+  // handleComplete is stable — safe in deps array, always calls latest onComplete
 }
 ```
+
+---
+
+## Generics
+
+```tsx
+// Generic list hook
+function useSelection<T>(items: T[], keyExtractor: (item: T) => string) {
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+
+  const toggle = useCallback((item: T) => {
+    const key = keyExtractor(item)
+    setSelectedKeys(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }, [keyExtractor])
+
+  const isSelected = useCallback(
+    (item: T) => selectedKeys.has(keyExtractor(item)),
+    [selectedKeys, keyExtractor],
+  )
+
+  const selectedItems = items.filter(item => selectedKeys.has(keyExtractor(item)))
+
+  return { toggle, isSelected, selectedItems, selectedKeys }
+}
+```
+
+---
 
 ## Worklet-Safe Utilities
 
-Functions called from Reanimated worklets must be decorated with `'worklet'`:
+Functions callable from Reanimated worklets — must be pure, no closures over JS:
 
 ```ts
 function clamp(value: number, min: number, max: number): number {
@@ -82,48 +208,45 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-function interpolateColor(progress: number, from: string, to: string): string {
+function lerp(start: number, end: number, t: number): number {
   'worklet'
-  // pure computation only — no React hooks, no closures over JS values
+  return start + (end - start) * t
+}
+
+function snapToGrid(value: number, step: number): number {
+  'worklet'
+  return Math.round(value / step) * step
 }
 ```
 
-Rules for worklet functions:
-- No `console.log` — crashes in New Arch worklet thread
-- No closures over non-primitive JS values
-- No async/await
-- No React hooks
-- Export separately from regular utils — label with `// worklet-safe` comment
+Rules: no `console.log`, no closures over objects, no async, no React hooks, no RN APIs.
 
-## Utility Template
-
-```ts
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-export { formatFileSize }
-```
+---
 
 ## TypeScript Patterns
 
 ```ts
-// Discriminated unions over boolean overloads
-type UseQueryResult<T> =
-  | { status: 'loading'; data: undefined; error: undefined }
-  | { status: 'error'; data: undefined; error: Error }
-  | { status: 'success'; data: T; error: undefined }
+// Discriminated union return type
+type UseAsyncResult<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; error: Error }
+  | { status: 'success'; data: T }
 
-// Conditional types for flexible APIs
-type MaybeArray<T> = T | T[]
-function normalizeArray<T>(value: MaybeArray<T>): T[] {
-  return Array.isArray(value) ? value : [value]
-}
+// Conditional generic for optional callback
+type MaybeCallback<T> = T extends undefined ? void : (value: NonNullable<T>) => void
 ```
 
+---
+
 ## Export Rules
-- Export the hook and all its types from `src/index.ts`
-- Never export internal implementation details
-- Name hooks `use*`, utilities with descriptive verb names (`formatX`, `parseX`, `createX`)
+
+```ts
+// src/index.ts
+export { useCounter } from './hooks/useCounter'
+export type { UseCounterOptions, UseCounterResult } from './hooks/useCounter'
+```
+
+- Name: `use*` for hooks, verb (`formatX`, `parseX`, `createX`) for utilities
+- Export options type + result type alongside every hook
+- Never export internal implementation helpers

@@ -15,6 +15,7 @@ These rules apply to every React Native library in this ecosystem.
 | Publishing to npm | `publish` |
 | Native modules or Fabric views | `codegen` |
 | Working on the example app | `example-app` |
+| List components, bundle size, FPS, memoization | `performance` |
 | Code quality scan | `deslop` |
 
 ## Hard Rules (Non-Negotiable)
