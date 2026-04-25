@@ -1,0 +1,9 @@
+{
+  "name": "rn-lib-claude",
+  "description": "Claude Code plugin for building React Native libraries targeting New Architecture (RN 0.76+)",
+  "version": "1.0.0",
+  "pluginRoot": "../plugins/rn-lib-claude",
+  "skills": "skills",
+  "commands": "commands",
+  "agents": "agents"
+}
