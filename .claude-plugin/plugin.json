@@ -7,5 +7,13 @@
   },
   "skills": "./plugins/rn-lib-claude/skills/",
   "commands": "./plugins/rn-lib-claude/commands/",
-  "agents": "./plugins/rn-lib-claude/agents/"
+  "agents": [
+    "./plugins/rn-lib-claude/agents/orchestrator.md",
+    "./plugins/rn-lib-claude/agents/library-architect.md",
+    "./plugins/rn-lib-claude/agents/component-developer.md",
+    "./plugins/rn-lib-claude/agents/hooks-developer.md",
+    "./plugins/rn-lib-claude/agents/codegen-engineer.md",
+    "./plugins/rn-lib-claude/agents/publisher.md",
+    "./plugins/rn-lib-claude/agents/code-reviewer.md"
+  ]
 }
