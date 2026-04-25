@@ -24,7 +24,7 @@ Handles the full release cycle for RN libraries. Changesets → build → publis
 2. Run `scripts/pre-publish.sh` — fix any failures before continuing
 3. `bunx changeset version`
 4. `bun run build`
-5. Review `lib/` — must contain `commonjs/`, `module/`, `typescript/`
+5. Review `lib/` — must contain `module/` and `typescript/` (modern bob uses ESM only, no `commonjs/`)
 6. `npm publish --access public`
 7. `git tag v{version} && git push --tags`
 8. Create GitHub release

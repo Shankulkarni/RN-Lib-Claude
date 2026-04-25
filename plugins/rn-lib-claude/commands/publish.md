@@ -5,7 +5,7 @@ description: Pre-publish validation and npm publish workflow for a React Native 
 Run pre-publish checks, then guide through publish:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/pre-publish.sh"
+bash "${CLAUDE_PLUGIN_ROOT}/plugins/rn-lib-claude/scripts/pre-publish.sh"
 ```
 
 If pre-publish passes:

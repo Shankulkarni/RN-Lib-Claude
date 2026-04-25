@@ -5,5 +5,5 @@ description: One-time setup after installing RN-Lib-Claude. Copies conventions t
 Run the setup script:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh"
+bash "${CLAUDE_PLUGIN_ROOT}/plugins/rn-lib-claude/scripts/setup.sh"
 ```

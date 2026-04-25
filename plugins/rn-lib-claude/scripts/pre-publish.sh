@@ -28,7 +28,7 @@ check "Changeset file exists" "ls .changeset/*.md 2>/dev/null | grep -v README"
 echo ""
 echo "Build"
 check "bob build passes" "bun run build"
-check "lib/commonjs exists" "[ -d lib/commonjs ]"
+# Modern bob uses module (ESM) output only — no commonjs target
 check "lib/module exists" "[ -d lib/module ]"
 check "lib/typescript exists" "[ -d lib/typescript ]"
 
@@ -41,6 +41,15 @@ check "No type errors" "bun run typecheck"
 echo ""
 echo "Lint"
 check "No lint errors" "bun run lint"
+
+# ── Format ────────────────────────────────────────────────────────────────────
+echo ""
+echo "Format"
+if command -v bun &>/dev/null; then
+  check "Code formatted correctly" "bun run format:check"
+else
+  echo "  ⚠ bun not found — skipping format check"
+fi
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 echo ""
@@ -55,6 +64,7 @@ check "main field in package.json" "node -e \"const p = require('./package.json'
 check "types field in package.json" "node -e \"const p = require('./package.json'); if (!p.types) process.exit(1)\""
 check "peerDependencies declared" "node -e \"const p = require('./package.json'); if (!p.peerDependencies || !p.peerDependencies['react-native']) process.exit(1)\""
 check "files field present" "node -e \"const p = require('./package.json'); if (!p.files) process.exit(1)\""
+check "prepare includes bob build" "node -e \"const p = require('./package.json'); if (!p.scripts.prepare || !p.scripts.prepare.includes('bob build')) process.exit(1)\""
 
 # ── Code quality ──────────────────────────────────────────────────────────────
 echo ""

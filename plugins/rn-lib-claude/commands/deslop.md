@@ -6,7 +6,7 @@ argument-hint: [path|--staged]
 Run the RN deslop scanner:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/deslop.sh" ${ARGUMENT:-.}
+bash "${CLAUDE_PLUGIN_ROOT}/plugins/rn-lib-claude/scripts/deslop.sh" ${ARGUMENT:-.}
 ```
 
 If critical issues found, list each one with `file:line` reference and fix instructions.

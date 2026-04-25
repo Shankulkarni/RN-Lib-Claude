@@ -25,7 +25,7 @@ Bumps `package.json` version + updates `CHANGELOG.md`.
 ```bash
 bun run build
 ```
-`bob build` must exit 0. Check `lib/` exists with cjs/, module/, typescript/.
+`bob build` must exit 0. Check `lib/` exists with `module/` and `typescript/` directories. Modern bob uses ESM-only output (no `commonjs/` directory).
 
 ### 4. Publish
 ```bash
@@ -47,7 +47,7 @@ Run `/publish` command — it runs `scripts/pre-publish.sh` automatically.
 Manual checks:
 - [ ] `bun run check` passes (typecheck + lint + tests)
 - [ ] `bun run build` passes
-- [ ] `lib/` contains `commonjs/`, `module/`, `typescript/`
+- [ ] `lib/` contains `module/` and `typescript/` (modern bob uses ESM only, no `commonjs/`)
 - [ ] `exports` map in `package.json` covers all public APIs
 - [ ] All peer deps declared with correct version ranges
 - [ ] At least one `.changeset/*.md` file exists

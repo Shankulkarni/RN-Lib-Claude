@@ -42,22 +42,19 @@ description: "Use when configuring TypeScript for a React Native library — str
 
 ## Exports Map (`package.json`)
 
+Modern bob (v0.41+) uses ESM-only output. The `commonjs` target is no longer standard.
+
 ```json
 {
-  "main": "lib/commonjs/index.js",
-  "module": "lib/module/index.js",
-  "types": "lib/typescript/src/index.d.ts",
+  "main": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./lib/typescript/src/index.d.ts",
-        "default": "./lib/module/index.js"
-      },
-      "require": {
-        "types": "./lib/typescript/src/index.d.ts",
-        "default": "./lib/commonjs/index.js"
-      }
-    }
+      "source": "./src/index.tsx",
+      "types": "./lib/typescript/src/index.d.ts",
+      "default": "./lib/module/index.js"
+    },
+    "./package.json": "./package.json"
   }
 }
 ```

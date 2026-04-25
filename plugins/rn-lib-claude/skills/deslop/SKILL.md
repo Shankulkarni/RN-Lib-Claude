@@ -8,7 +8,7 @@ description: "Use when scanning a React Native library for code quality issues â
 Run the scanner:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/deslop.sh" ${ARGUMENT:-.}
+bash "${CLAUDE_PLUGIN_ROOT}/plugins/rn-lib-claude/scripts/deslop.sh" ${ARGUMENT:-.}
 ```
 
 ## What It Scans
