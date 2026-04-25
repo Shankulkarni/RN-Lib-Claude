@@ -2,9 +2,16 @@
 
 Claude Code plugin for building React Native libraries targeting **New Architecture (RN 0.76+)**.
 
-```
-claude plugin marketplace add <source>
-claude plugin install rn-lib-claude
+## Install
+
+```bash
+# Add the marketplace (one-time)
+/plugin marketplace add Utilities-Studio/claude-plugin-marketplace
+
+# Install the plugin
+/plugin install rn-lib-claude@utilities-studio
+
+# Run setup
 /rn-lib-claude:setup
 ```
 
