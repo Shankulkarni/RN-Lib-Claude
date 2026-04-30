@@ -22,13 +22,13 @@
 
 ---
 
-> **Note:** RN-Lib-Claude is distributed through the [claude-plugin-marketplace](https://github.com/Utilities-Studio/claude-plugin-marketplace).
+> **Note:** RN-Lib-Claude is distributed through the [claude-plugin-marketplace](https://github.com/Shankulkarni/claude-plugin-marketplace).
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                                                                            │
-│   /plugin marketplace add Utilities-Studio/claude-plugin-marketplace       │
-│   /plugin install rn-lib-claude@utilities-studio                           │
+│   /plugin marketplace add Shankulkarni/claude-plugin-marketplace            │
+│   /plugin install rn-lib-claude@shankulkarni                               │
 │   /rn-lib-claude:setup                                                     │
 │                                                                            │
 │   That's it. Every library. Every component. Same standards.               │
@@ -245,10 +245,10 @@ Uses Claude Code's native plugin system. No custom scripts needed.
 
 ```bash
 # 1. Add the marketplace
-/plugin marketplace add Utilities-Studio/claude-plugin-marketplace
+/plugin marketplace add Shankulkarni/claude-plugin-marketplace
 
 # 2. Install the plugin
-/plugin install rn-lib-claude@utilities-studio
+/plugin install rn-lib-claude@shankulkarni
 
 # 3. Run setup in Claude Code
 /rn-lib-claude:setup
@@ -257,8 +257,8 @@ Uses Claude Code's native plugin system. No custom scripts needed.
 ### Update
 
 ```bash
-/plugin marketplace update utilities-studio
-/plugin update rn-lib-claude@utilities-studio
+/plugin marketplace update shankulkarni
+/plugin update rn-lib-claude@shankulkarni
 ```
 
 Or from Claude Code: `/rn-lib-claude:update`
@@ -268,7 +268,7 @@ Or from Claude Code: `/rn-lib-claude:update`
 Run `/rn-lib-claude:uninstall` first (removes conventions from CLAUDE.md), then:
 
 ```bash
-/plugin uninstall rn-lib-claude@utilities-studio
+/plugin uninstall rn-lib-claude@shankulkarni
 ```
 
 ---
