@@ -16,14 +16,19 @@ Source repo: https://github.com/react-native-community/directory
 - Public GitHub repository exists
 - README documents the library
 
-## Method 1: CLI (recommended)
+## Method 1: CLI — autoSubmit (recommended, fully automatic)
 
-Run from your library root:
+Run from your library root. Reads `package.json` automatically and creates a PR without prompts:
+```bash
+bunx rn-directory autoSubmit
+```
+
+If the library is already in the directory (updating an existing entry), use the interactive CLI instead:
 ```bash
 bunx rn-directory submit
 ```
 
-The CLI walks through the fields interactively and opens a PR automatically.
+Both commands are confirmed working (`bunx rn-directory --help` shows both).
 
 ## Method 2: Manual PR
 
@@ -116,7 +121,7 @@ gh pr create \
 }
 ```
 - No `expoGo` — native libraries cannot run in Expo Go, they require a dev client
-- Add `"configPlugin": true` if you ship an `app.plugin.js`
+- Add `"configPlugin": true` only if you ship an `app.plugin.js` that modifies the consumer's native project (permissions, build settings). Do NOT set this just because you have `expo-module.config.json` — that's auto-linking, not a config plugin.
 
 ### Fabric view
 ```json

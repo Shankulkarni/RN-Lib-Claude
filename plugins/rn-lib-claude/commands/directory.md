@@ -9,13 +9,19 @@ Read the `directory` skill fully, then guide the user through submitting their l
    - Confirm a public GitHub repository exists
    - Confirm README documents the library
 
-2. **Try CLI first:**
+2. **Try `autoSubmit` first** — reads `package.json` automatically, no prompts:
+   ```bash
+   bunx rn-directory autoSubmit
+   ```
+   If this opens a PR, skip to step 6.
+
+3. **If `autoSubmit` fails — try interactive CLI:**
    ```bash
    bunx rn-directory submit
    ```
-   If this succeeds and opens a PR, you're done — skip to step 6.
+   If this opens a PR, skip to step 6.
 
-3. **If CLI unavailable or fails — gather entry fields:**
+4. **If both CLI methods fail — gather entry fields manually:**
    Ask the user for:
    - GitHub repo URL (required)
    - npm package name (only if different from repo name or monorepo)
@@ -32,7 +38,7 @@ Read the `directory` skill fully, then guide the user through submitting their l
    - `newArchitecture: true` for all libraries built with this plugin
    - Add `"web": true` and `"expoGo": true` only for JS-only libraries
 
-5. **Submit manual PR:**
+5. **If all CLI methods failed — submit manual PR:**
    ```bash
    gh repo fork react-native-community/directory --clone
    cd directory

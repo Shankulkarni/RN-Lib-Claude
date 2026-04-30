@@ -275,37 +275,78 @@ Properties that prevent flattening (no need for `collapsable`): `backgroundColor
 
 ## Expo Support for Native Libraries
 
-Native libraries need `expo-module.config.json` at the repo root so Expo's auto-linking picks them up in managed and bare workflows.
+Two separate concerns. Do not confuse them.
 
-### `expo-module.config.json` (TurboModule)
+### 1. `expo-module.config.json` — Auto-linking
+
+Tells Expo's auto-linker which native classes to register. Without this file, the library won't link in Expo managed or bare workflow.
+
+The class names must match what you named your native classes. Use the actual class names from your iOS and Android implementation.
+
+**TurboModule** — the iOS class is `RNMyLib` (from `RCT_EXPORT_MODULE()`), Android class is `MyLibModule` (from `getName()`):
 ```json
 {
   "platforms": ["apple", "android"],
   "ios": {
-    "modules": ["RNMyLibModule"]
+    "modules": ["RNMyLib"]
   },
   "android": {
-    "modules": ["com.mylib.MyLibPackage"]
+    "modules": ["com.mylib.MyLibModule"]
   }
 }
 ```
 
-### `expo-module.config.json` (Fabric view)
+**Fabric view** — the iOS view component is `RNMyLibView`, Android is `MyLibViewManager`:
 ```json
 {
   "platforms": ["apple", "android"],
   "ios": {
-    "components": ["MyLibView"]
+    "components": ["RNMyLibView"]
   },
   "android": {
-    "components": ["com.mylib.MyLibView"]
+    "components": ["com.mylib.MyLibViewManager"]
   }
 }
 ```
 
-This file tells Expo which modules/components to auto-link. Without it, users in Expo managed workflow must manually configure `app.json` plugins.
+How to find the right class names:
+- iOS: look for `RCT_EXPORT_MODULE()` or `RCT_EXPORT_VIEW_COMPONENT()` in your `.mm` file — the argument (or class name if no argument) is what goes here
+- Android: look for the class extending `NativeXXXSpec` or `SimpleViewManager` — use the fully qualified class name
 
-Add `"expo-module.config.json"` to the `files` array in `package.json` so it's included in the published package.
+Add `"expo-module.config.json"` to `files` in `package.json` so it ships with the package.
+
+### 2. `app.plugin.js` — Config Plugin (only when needed)
+
+A config plugin modifies the consumer's native project at build time — adding permissions to `AndroidManifest.xml`, entries to `Info.plist`, Gradle dependencies, etc.
+
+You only need this if your library requires native project configuration beyond just linking. Examples:
+- Library needs camera permission → add `NSCameraUsageDescription` to Info.plist
+- Library needs a background mode → add to `UIBackgroundModes`
+- Library needs a custom Gradle dependency not auto-linked
+
+Most simple TurboModules and Fabric views do NOT need a config plugin — auto-linking is sufficient.
+
+If you do need one:
+```js
+// app.plugin.js
+const { withInfoPlist } = require('@expo/config-plugins')
+
+module.exports = function withMyLib(config) {
+  return withInfoPlist(config, config => {
+    config.modResults.NSCameraUsageDescription = 'Required for camera preview'
+    return config
+  })
+}
+```
+
+Then add to `package.json`:
+```json
+{
+  "main": "app.plugin.js"
+}
+```
+
+The directory entry field `configPlugin: true` refers to this `app.plugin.js` — not `expo-module.config.json`. Every native library should have `expo-module.config.json`. Only libraries that modify native project config need `app.plugin.js`.
 
 ---
 

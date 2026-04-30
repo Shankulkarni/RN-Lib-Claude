@@ -40,7 +40,10 @@ git push --tags
 ```
 Create GitHub release with CHANGELOG.md section as body.
 
-### 6. Submit to React Native Directory (optional)
+### 6. Set up CI/CD (first publish only)
+Add GitHub Actions workflows for automated checks and publish. Read the `ci` skill.
+
+### 7. Submit to React Native Directory (optional)
 If this is the first publish, submit to https://reactnative.directory for discoverability.
 Run `/rn-lib-claude:directory` or use the `directory` skill directly.
 
@@ -61,20 +64,9 @@ Manual checks:
 
 ## Peer Dep Ranges
 
-```json
-"peerDependencies": {
-  "react": ">=18.0.0",
-  "react-native": ">=0.76.0",
-  "react-native-reanimated": ">=3.0.0",
-  "react-native-gesture-handler": ">=2.0.0"
-},
-"peerDependenciesMeta": {
-  "react-native-reanimated": { "optional": true },
-  "react-native-gesture-handler": { "optional": true }
-}
-```
-
+Use `>=` not `^` for all peer deps. Wide ranges prevent consumer conflicts.
 Mark reanimated/gesture-handler as optional if library only uses them in some components.
+See `scaffold` skill for the exact JSON — don't duplicate the values here.
 
 ## Semver Rules
 

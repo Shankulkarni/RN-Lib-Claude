@@ -8,7 +8,18 @@ color: red
 
 Reviews RN library code for correctness, safety, and publish-readiness. Not style.
 
-## Review Checklist
+## Triggered by
+Orchestrator Phase 6, or user says "review the code" / "is this ready to publish".
+
+## Required input
+- The files to review (or review entire `src/` if not specified)
+
+## Delivers
+A structured report: summary → 🔴 blockers → 🟡 suggestions → 💭 notes. Specific `file:line` references. Explain why, not just what.
+
+---
+
+## Checklist
 
 ### Blockers (🔴 — must fix before merge/publish)
 - Legacy bridge APIs: `NativeModules`, `requireNativeComponent`, `UIManager`
@@ -22,7 +33,7 @@ Reviews RN library code for correctness, safety, and publish-readiness. Not styl
 - `bob build` fails
 
 ### Suggestions (🟡 — should fix)
-- `console.log` anywhere in `src/` (remove before publish)
+- `console.log` anywhere in `src/`
 - Missing `displayName` on components
 - Missing `accessibilityRole` on interactive elements
 - Prop that should be optional isn't
@@ -35,10 +46,11 @@ Reviews RN library code for correctness, safety, and publish-readiness. Not styl
 ### Notes (💭 — consider)
 - Could this be a hook instead of a component?
 - Is this internal helper accidentally exported?
-- Could prop be more composable?
+- Could this prop be more composable?
 - Missing edge case in tests
 
-## Format
+## Rules
+Never flag style (ESLint's job). Never flag test implementation details.
 
-Summary → blockers → suggestions → what's good. Specific `file:line` references. Explain why, not just what.
-Never flag style (that's ESLint's job). Never flag test implementation details.
+## Returns to
+Orchestrator. Report: blocker count, suggestion count. Orchestrator does not proceed to Phase 7 until blocker count = 0.

@@ -4,7 +4,7 @@
     <strong>Claude Code plugin for building and publishing React Native libraries.</strong>
   </p>
   <p align="center">
-    <code>3 library types</code> · <code>11 skills</code> · <code>7 agents</code> · <code>7 commands</code> · <code>5 scripts</code>
+    <code>3 library types</code> · <code>12 skills</code> · <code>7 agents</code> · <code>7 commands</code> · <code>4 scripts</code>
   </p>
 </p>
 
@@ -69,7 +69,8 @@ Loaded on-demand. Only the relevant skill enters context — the rest cost 0 tok
 | 📱 | `example-app` | Expo SDK 52+, Expo Go vs dev client, demo patterns, metro config |
 | ⚡ | `performance` | Bundle size, memoization, FlashList, FPS targets |
 | 🧹 | `deslop` | Legacy bridge APIs, `console.log` in worklets, hardcoded values |
-| 🗂️ | `directory` | Submit to reactnative.directory — entry format, CLI, manual PR |
+| 🗂️ | `directory` | Submit to reactnative.directory — `autoSubmit` CLI, manual PR |
+| 🔧 | `ci` | GitHub Actions — PR quality gate, automated Changesets publish, NPM_TOKEN |
 
 ---
 
@@ -189,7 +190,7 @@ rn-lib-claude/
 │   ├── codegen-engineer.md
 │   ├── publisher.md
 │   └── code-reviewer.md
-├── skills/                  ← 11 on-demand skills
+├── skills/                  ← 12 on-demand skills
 │   ├── scaffold/
 │   ├── component/
 │   ├── hooks/
@@ -201,7 +202,8 @@ rn-lib-claude/
 │   ├── example-app/
 │   ├── performance/
 │   ├── deslop/
-│   └── directory/
+│   ├── directory/
+│   └── ci/
 ├── commands/                ← 7 slash commands
 │   ├── setup.md
 │   ├── update.md
@@ -213,7 +215,6 @@ rn-lib-claude/
 └── scripts/                 ← Pure bash tooling (0 tokens)
     ├── setup.sh
     ├── teardown.sh
-    ├── check-new-arch.sh
     ├── deslop.sh
     └── pre-publish.sh
 ```

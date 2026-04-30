@@ -20,7 +20,7 @@ Read the `scaffold` skill fully, then guide the user through creating a new Reac
    - Always pass `--author-url` as a valid URL (not empty)
 7. Remove `.yarn` and `.yarnrc.yml`, run `bun install`
 8. Apply all conventions from the `scaffold` skill (package.json, prettier, ESLint peer deps, Changesets, Husky + lint-staged)
-9. **Critical:** After `bunx husky init`, restore `prepare` script to `bob build && husky` (husky init overwrites it)
+9. Follow the `scaffold` skill exactly for Husky, ESLint peers, and the prepare script — the skill has the full details
 10. Install all ESLint peer dependencies (8 packages — see Step 6 in skill)
 11. Run `bun run format` to apply prettier conventions to all generated files
 12. Native only: apply `codegen` skill setup — verify `codegenConfig.type` is `"modules"` (TurboModule) or `"components"` (Fabric view). Skip for JS-only.

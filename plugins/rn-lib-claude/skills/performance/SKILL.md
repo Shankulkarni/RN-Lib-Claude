@@ -1,279 +1,281 @@
 ---
 name: performance
-description: "Use when building performance-sensitive React Native library components — list virtualization, memoization, bundle size, barrel exports, FPS targets, and React Compiler compatibility."
+description: "Use when building performance-sensitive React Native library components — list virtualization, JS thread safety, bundle size, FlashList, FPS diagnosis, and Hermes-specific patterns."
 ---
 
 # Performance Patterns for RN Libraries
 
-As a library author, performance decisions you make affect every consumer app. These patterns matter.
+As a library author, your decisions affect every consumer app. These are RN-specific — not general React patterns.
 
 ---
 
-## List Components — Virtualization
+## List Virtualization
 
-If building a list-based component (gallery, feed, picker), never use `ScrollView` for unbounded lists.
+Never use `ScrollView` for unbounded lists. It renders all items upfront.
 
 ```tsx
-// ❌ ScrollView — renders ALL items upfront
+// ❌ ScrollView — 5,000 items = 1–3s freeze
 <ScrollView>
-  {items.map(item => <Item key={item.id} {...item} />)}
+  {countries.map(c => <CountryRow key={c.code} {...c} />)}
 </ScrollView>
 
-// ✅ FlashList — virtualizes, only renders visible items
+// ✅ FlashList — only renders visible items, ~50ms for 5,000 items
 import { FlashList } from '@shopify/flash-list'
 
 <FlashList
-  data={items}
-  renderItem={({ item }) => <Item id={item.id} title={item.title} />}
-  estimatedItemSize={80}
-  keyExtractor={item => item.id}
+  data={countries}
+  renderItem={({ item }) => <CountryRow code={item.code} name={item.name} />}
+  estimatedItemSize={56}
+  keyExtractor={item => item.code}
 />
 ```
 
-Performance reality: 5,000 items → ScrollView freezes 1–3s, FlashList ~50ms.
-
----
-
-## List Memoization Rules
-
-### Pass primitives to memoized items — not objects
+### Pass primitives to memoized list items — not objects
 
 ```tsx
-// ❌ Object prop breaks memo — new reference every render
-const renderItem = ({ item }: { item: Item }) => (
-  <MemoItem data={item} onPress={handlePress} />
-)
+// ❌ Object prop — new reference every render, memo is useless
+<MemoRow data={item} onPress={handlePress} />
 
-// ✅ Primitive props — shallow comparison works
-const renderItem = ({ item }: { item: Item }) => (
-  <MemoItem id={item.id} title={item.title} onPress={handlePress} />
-)
-
-const MemoItem = memo(({ id, title, onPress }: { id: string; title: string; onPress: (id: string) => void }) => (
-  <Pressable onPress={() => onPress(id)}>
-    <Text>{title}</Text>
-  </Pressable>
-))
+// ✅ Primitives — shallow comparison works
+<MemoRow code={item.code} name={item.name} onPress={handlePress} />
 ```
 
-### Hoist callbacks to list root — not inline in renderItem
+### `getItemType` for heterogeneous lists
 
 ```tsx
-// ❌ New function reference every render
-<FlashList
-  renderItem={({ item }) => (
-    <Item onPress={() => handleSelect(item.id)} />  // new fn per render
-  )}
-/>
-
-// ✅ Hoist — stable reference, items call with ID
-const handleSelect = useCallback((id: string) => {
-  // handle selection
-}, [])
-
-<FlashList
-  renderItem={({ item }) => <Item id={item.id} onPress={handleSelect} />}
-/>
-```
-
-### Stable object references
-
-```tsx
-// ❌ Transform inside render — new array reference every render
-<FlashList data={items.filter(i => i.active)} />
-
-// ✅ Memoize filtered data
-const activeItems = useMemo(() => items.filter(i => i.active), [items])
-<FlashList data={activeItems} />
-```
-
-### Heterogeneous lists — provide `getItemType`
-
-```tsx
-type FeedItem = { type: 'post' | 'ad' | 'story'; id: string }
-
 <FlashList
   data={feed}
-  getItemType={item => item.type}   // ← prevents layout thrashing during recycling
-  renderItem={({ item }) => {
-    if (item.type === 'post') return <PostCard id={item.id} />
-    if (item.type === 'ad') return <AdCard id={item.id} />
-    return <StoryCard id={item.id} />
-  }}
+  getItemType={item => item.type}  // prevents layout thrashing during recycling
+  renderItem={({ item }) => { ... }}
 />
+```
+
+### Hoist callbacks outside `renderItem`
+
+```tsx
+// ❌ New function per render — breaks all item memoization
+<FlashList renderItem={({ item }) => <Row onPress={() => select(item.id)} />} />
+
+// ✅ Stable reference — items receive the same function instance
+const handleSelect = useCallback((id: string) => select(id), [])
+<FlashList renderItem={({ item }) => <Row id={item.id} onPress={handleSelect} />} />
 ```
 
 ---
 
-## FPS Targets (for animated components)
+## JS Thread — Don't Block It
 
-| FPS | State |
-|---|---|
-| 55–60 | Smooth — target for all animations |
-| 45–55 | Slight stutter — investigate |
-| 30–45 | Noticeable — must fix before publish |
-| <30 | Critical — broken |
+The JS thread drives your library. Blocking it drops frames for the consumer's entire app.
 
-Measure with **React Native Performance Monitor**:
-- Android: Shake device → Show Perf Monitor
-- iOS: Shake device → Show Perf Monitor, or Cmd+D in simulator
+**What blocks the JS thread:**
+- Synchronous operations over ~4ms
+- Large JSON.parse / JSON.stringify in render
+- Unthrottled event handlers (scroll, pan)
+- Filtering/sorting large arrays during render
 
-**UI FPS drop only** = native rendering issue (layout, GPU)\
-**JS FPS drop only** = JS thread blocked (heavy computation, re-renders)
+**Patterns to avoid:**
+
+```tsx
+// ❌ Expensive filter on every render
+function CountryPicker({ query }: { query: string }) {
+  const results = allCountries.filter(c =>   // runs every render
+    c.name.toLowerCase().includes(query.toLowerCase())
+  )
+  return <FlashList data={results} ... />
+}
+
+// ✅ Memoize expensive derivations
+function CountryPicker({ query }: { query: string }) {
+  const results = useMemo(
+    () => allCountries.filter(c => c.name.toLowerCase().includes(query.toLowerCase())),
+    [query]
+  )
+  return <FlashList data={results} ... />
+}
+```
+
+**For search/filter with large datasets:** debounce the input, not the filter.
+
+```tsx
+const [query, setQuery] = useState('')
+const debouncedQuery = useDebounce(query, 150)  // only refilter after typing stops
+const results = useMemo(
+  () => allCountries.filter(c => c.name.includes(debouncedQuery)),
+  [debouncedQuery]
+)
+```
 
 ---
 
-## Memoization
+## FPS Targets
+
+| FPS | State | Action |
+|---|---|---|
+| 55–60 | Smooth | Ship it |
+| 45–55 | Stutter | Investigate |
+| 30–45 | Noticeable | Fix before publish |
+| <30 | Broken | Block publish |
+
+**Diagnose in the example app:**
+- Shake device (or Cmd+D in simulator) → Show Perf Monitor
+- **JS FPS drops**: JS thread blocked — look for expensive renders, heavy useMemo, sync operations
+- **UI FPS drops only, JS FPS fine**: GPU/layout issue — look for shadows, `overflow: hidden`, large blurs
+
+---
+
+## Bundle Size — Your Responsibility
+
+Every byte you add gets paid by every consumer app, on every install.
+
+### No internal barrel exports
+
+```ts
+// ❌ Barrel — Metro loads everything even if consumer imports one export
+// src/components/index.ts
+export * from './Button'
+export * from './Input'
+export * from './Modal'
+
+// ✅ Export directly from src/index.ts — only the public API
+export { Button } from './components/Button'
+export { Input } from './components/Input'
+```
+
+### `sideEffects: false` in package.json
+
+```json
+{ "sideEffects": false }
+```
+
+Tells bundlers all exports are pure — unused ones are safely tree-shaken.
+
+### Size benchmarks
+
+Check with [pkg-size.dev](https://pkg-size.dev) or bundlephobia:
+
+| Size (minified + gzip) | Verdict |
+|---|---|
+| < 5 KB | Great |
+| 5–20 KB | Acceptable — document what's included |
+| 20–50 KB | Justify — what is this size coming from? |
+| > 50 KB | Block unless it bundles a necessary data file (e.g. country database) |
+
+### Never bundle what consumers already have
+
+```json
+// ❌ Direct dep — shipped twice
+"dependencies": { "react-native-reanimated": "^3.0.0" }
+
+// ✅ Peer dep — one instance in the consumer's app
+"peerDependencies": { "react-native-reanimated": ">=3.0.0" }
+```
+
+---
+
+## Hermes-Specific Patterns
+
+All RN 0.76+ apps run on Hermes. Write Hermes-friendly code.
+
+**Avoid `eval` and `Function()` constructors** — Hermes uses AOT compilation, dynamic code generation is unsupported and will throw.
+
+**Avoid `arguments` object** — use rest params instead:
+```ts
+// ❌ arguments — not optimized by Hermes
+function format() { return Array.from(arguments).join(', ') }
+
+// ✅ Rest params — Hermes-optimized
+function format(...args: string[]) { return args.join(', ') }
+```
+
+**WeakRef and FinalizationRegistry** are available in Hermes — use them for optional cleanup of large resources (image caches, native object references) without causing memory leaks.
+
+---
+
+## React Memoization
+
+Use these when the component receives frequent re-renders or passes callbacks to memoized children.
 
 ```tsx
-// memo — wrap component if parent re-renders frequently and props are stable
-const MyItem = memo(({ id, title }: ItemProps) => (
-  <View><Text>{title}</Text></View>
+// memo — component whose parent re-renders often but its own props are stable
+const CountryRow = memo(({ code, name, onSelect }: CountryRowProps) => (
+  <Pressable onPress={() => onSelect(code)}>
+    <Text>{name}</Text>
+  </Pressable>
 ))
 
-// useMemo — for expensive derived values
-const sortedItems = useMemo(
-  () => [...items].sort((a, b) => a.title.localeCompare(b.title)),
-  [items],
+// useMemo — expensive derived value
+const filteredCountries = useMemo(
+  () => countries.filter(c => c.name.toLowerCase().includes(query)),
+  [query]
 )
 
-// useCallback — for callbacks passed as props to memoized children
-const handlePress = useCallback((id: string) => {
-  onSelect?.(id)
+// useCallback — stable function reference passed to memoized children
+const handleSelect = useCallback((code: string) => {
+  onSelect?.(code)
 }, [onSelect])
 ```
 
-Don't over-memoize — measure first. `memo` with object props silently breaks (fails shallow equality).
+Don't over-memoize — `memo` with object props silently breaks (fails shallow equality). Measure with the Perf Monitor before adding memoization.
 
 ---
 
-## React Compiler Compatibility
+## React Compiler Compatibility (RN 0.76+, Expo SDK 52+)
 
-React Compiler (RN 0.76+, Expo SDK 52+) auto-memoizes components. Write compiler-friendly code so consumers benefit:
+React Compiler auto-memoizes components. Write compiler-friendly code so consumers benefit:
 
 ```tsx
-// ✅ Destructure functions at render top — stable references
+// ✅ Destructure function props at render top — compiler can track them
 function MyComponent({ onPress, onLongPress }: Props) {
-  // ✅ Destructured at top level — compiler can optimize
   const handlePress = () => onPress()
   const handleLongPress = () => onLongPress?.()
-  // ...
+  return <Pressable onPress={handlePress} onLongPress={handleLongPress} />
 }
 
-// ❌ Dot-access in JSX — compiler misses optimization
+// ❌ Dot-access in JSX — compiler misses the optimization
 <Pressable onPress={() => props.onPress()} />
-
-// ✅ Destructured — compiler optimizes
-const { onPress } = props
-<Pressable onPress={onPress} />
 ```
 
 ---
 
-## Bundle Size — Library Author Responsibilities
+## TextInput — Uncontrolled for Typing Performance
 
-Consumers pay for every byte you add. Keep it lean.
-
-### No barrel exports internally
-
-```ts
-// ❌ Barrel — Metro loads everything even if consumer uses one export
-export * from './components'
-export * from './hooks'
-export * from './utils'
-
-// ✅ Direct imports in src/ — only re-export public API from index.ts
-export { Button } from './components/Button'
-export { useCounter } from './hooks/useCounter'
-```
-
-### Tree shaking — use ESM
-
-`bob` builds ESM (`lib/module/`) automatically. Ensure your source uses ESM:
-```ts
-// ✅ ESM — tree-shakeable
-import { clamp } from './utils/math'
-export { Button } from './components/Button'
-
-// ❌ CommonJS in source — kills tree shaking
-const { clamp } = require('./utils/math')
-module.exports = { Button }
-```
-
-### Declare `sideEffects: false` in `package.json`
-
-```json
-{
-  "sideEffects": false
-}
-```
-
-This tells bundlers all exports are pure and unused ones can be safely removed.
-
-### Check size before shipping
-
-Use [bundlephobia.com](https://bundlephobia.com) or `pkg-size.dev`:
-- **<5 KB** minified+gzip — great
-- **5–20 KB** — acceptable, document what's included
-- **20–50 KB** — justify or find lighter alternative
-- **>50 KB** — needs strong justification
-
-### Don't bundle what consumers already have
-
-```json
-// ❌ Direct dep — bundled twice (your lib + consumer's app)
-"dependencies": {
-  "react-native-reanimated": "^3.0.0"
-}
-
-// ✅ Peer dep — single instance in consumer's app
-"peerDependencies": {
-  "react-native-reanimated": ">=3.0.0"
-}
-```
-
----
-
-## Intl / Date Formatting — Module Scope
-
-```ts
-// ❌ Created in render/component — recreated every call (expensive)
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
-}
-
-// ✅ Module scope — created once
-const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-
-function formatDate(date: Date) {
-  return dateFormatter.format(date)
-}
-
-// ✅ Or useMemo if locale is dynamic
-const formatter = useMemo(
-  () => new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }),
-  [locale],
-)
-```
-
----
-
-## TextInput — Uncontrolled for Simple Cases
-
-On New Architecture this is mostly fixed, but for maximum compatibility:
+Controlled `TextInput` sends every keystroke through the JS bridge, which can cause flicker on fast typing. For search inputs in pickers and filters, prefer uncontrolled:
 
 ```tsx
-// ❌ Controlled — character round-trip can cause flicker on some devices
-<TextInput value={text} onChangeText={setText} />
+// ❌ Controlled — every keystroke round-trips through JS
+<TextInput value={query} onChangeText={setQuery} />
 
-// ✅ Uncontrolled — native manages state during typing
+// ✅ Uncontrolled — native manages state during typing, JS only sees final value
 <TextInput
-  defaultValue={initialText}
+  defaultValue={initialQuery}
   onChangeText={text => {
-    valueRef.current = text
-    onChangeText?.(text)
+    queryRef.current = text
+    onQueryChange?.(text)
   }}
 />
 ```
 
 Never combine `value` and `defaultValue`.
+
+---
+
+## Intl / Date Formatting — Module Scope
+
+`Intl` constructors are expensive. Create once at module scope, not per render.
+
+```ts
+// ❌ Recreated on every call
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
+}
+
+// ✅ Created once
+const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+export function formatDate(date: Date) { return dateFormatter.format(date) }
+
+// ✅ Or useMemo if locale is dynamic
+const formatter = useMemo(
+  () => new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }),
+  [locale]
+)
+```
