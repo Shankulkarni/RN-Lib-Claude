@@ -4,7 +4,7 @@
     <strong>Claude Code plugin for building and publishing React Native libraries.</strong>
   </p>
   <p align="center">
-    <code>3 library types</code> · <code>12 skills</code> · <code>7 agents</code> · <code>7 commands</code> · <code>4 scripts</code>
+    <code>3 library types</code> · <code>13 skills</code> · <code>7 agents</code> · <code>8 commands</code> · <code>4 scripts</code>
   </p>
 </p>
 
@@ -35,6 +35,20 @@
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Why this plugin exists
+
+The right way to build an RN library — New Architecture, Expo, Changesets, CI — isn't written down in one place. You piece it together from docs, GitHub issues, and trial and error. This plugin is that one place.
+
+- Setting up is 14 manual steps. `/rn-lib-claude:scaffold` does them all.
+- Broken libraries ship to npm — missing changeset, console.log in src, version at 0.0.0. Pre-publish checks block them.
+- New Arch violations (NativeModules, UIManager, console.log in worklets) slip through to users. deslop catches them with file:line.
+- Wiring CI from scratch takes hours. The CI skill gives you working YAML for a PR gate and Changesets publish.
+- Codegen knowledge is spread across three different docs. The codegen skill has it: threading constraints, Expo class names, auto-linking vs config plugin.
+- Code gets published without a spec or review. Agents enforce spec → scaffold → review → publish. No skipping.
+- Getting listed on reactnative.directory is a manual PR. One command does it.
 
 ---
 
@@ -120,6 +134,7 @@ Type these directly in Claude Code:
 | `/rn-lib-claude:publish` | 🚀 Pre-publish checks + npm publish + optional directory submission |
 | `/rn-lib-claude:deslop` | 🧹 Scan for anti-patterns and New Architecture violations |
 | `/rn-lib-claude:directory` | 🗂️ Submit published library to reactnative.directory |
+| `/rn-lib-claude:ci` | 🔧 Set up GitHub Actions CI/CD — PR gate + automated publish |
 
 ```
   /rn-lib-claude:scaffold     ← you type this
@@ -190,7 +205,7 @@ rn-lib-claude/
 │   ├── codegen-engineer.md
 │   ├── publisher.md
 │   └── code-reviewer.md
-├── skills/                  ← 12 on-demand skills
+├── skills/                  ← 13 on-demand skills
 │   ├── scaffold/
 │   ├── component/
 │   ├── hooks/
@@ -204,14 +219,15 @@ rn-lib-claude/
 │   ├── deslop/
 │   ├── directory/
 │   └── ci/
-├── commands/                ← 7 slash commands
+├── commands/                ← 8 slash commands
 │   ├── setup.md
 │   ├── update.md
 │   ├── uninstall.md
 │   ├── scaffold.md
 │   ├── publish.md
 │   ├── deslop.md
-│   └── directory.md
+│   ├── directory.md
+│   └── ci.md
 └── scripts/                 ← Pure bash tooling (0 tokens)
     ├── setup.sh
     ├── teardown.sh

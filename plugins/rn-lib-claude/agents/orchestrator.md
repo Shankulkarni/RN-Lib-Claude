@@ -43,12 +43,14 @@ Spawn the right agent based on what is being built. Be specific in the handoff.
 |---|---|
 | "design the API" / first library build | `library-architect` |
 | Any component or animated UI | `component-developer` |
-| Any hook, utility, or headless logic | `hooks-developer` |
+| Standalone hook or utility with no UI | `hooks-developer` |
 | Any native method or native view | `codegen-engineer` |
 | "review" / pre-publish gate | `code-reviewer` |
 | "publish" / "release" / "ship it" | `publisher` |
 
-A single feature may require multiple specialists sequentially (e.g. codegen-engineer then component-developer for a Fabric view with a JS wrapper). Complete each before starting the next.
+**Component + hooks tiebreaker:** If a feature has both a UI component and associated hooks/logic, spawn `component-developer` only — it handles both. Only spawn `hooks-developer` alone when there is no UI component (e.g. a standalone `useCountrySearch` with no JSX).
+
+A single feature may require multiple specialists sequentially (e.g. `codegen-engineer` then `component-developer` for a Fabric view with a JS wrapper). Complete each before starting the next.
 
 ## Approve Gate (Phase 3) — Exact Protocol
 

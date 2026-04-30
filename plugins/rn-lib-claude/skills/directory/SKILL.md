@@ -23,6 +23,22 @@ Run from your library root. Reads `package.json` automatically and creates a PR 
 bunx rn-directory autoSubmit
 ```
 
+**Requires these fields in `package.json` to work correctly:**
+- `name` — npm package name
+- `description` — shown in the directory listing
+- `repository` — GitHub URL (string or `{ "url": "..." }` object)
+- `homepage` — optional but used if present
+
+If any are missing, add them before running:
+```json
+{
+  "name": "rn-my-library",
+  "description": "A React Native library for ...",
+  "repository": "https://github.com/yourname/rn-my-library",
+  "homepage": "https://github.com/yourname/rn-my-library"
+}
+```
+
 If the library is already in the directory (updating an existing entry), use the interactive CLI instead:
 ```bash
 bunx rn-directory submit

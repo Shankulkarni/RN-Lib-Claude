@@ -29,7 +29,6 @@ bash "${CLAUDE_PLUGIN_ROOT}/plugins/rn-lib-claude/scripts/deslop.sh" ${ARGUMENT:
 - Hardcoded colors (`'#fff'`, `'red'`, `'black'`) — should be props
 - Hardcoded dimensions (magic numbers without comment)
 - `PanResponder` — use GestureDetector
-- `useContext` without `use()` — should use React 19 `use()`
 
 ### Low (info)
 - `eslint-disable` comments — should fix root cause
