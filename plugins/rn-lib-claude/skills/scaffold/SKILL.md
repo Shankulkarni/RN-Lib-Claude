@@ -90,8 +90,23 @@ bunx create-react-native-library@latest rn-my-library \
 | Native folders | `android/` `ios/` | `android/` `ios/` | none |
 | Codegen spec | required | required | none |
 
+**`--languages` controls the native language (Kotlin/ObjC), NOT TypeScript.** TypeScript is always generated. For a JS-only library, `--languages js` means "no native code" — it does not mean JavaScript instead of TypeScript.
+
 **`--author-url` must be a valid URL (cannot be empty) for all types.**
 **Skip `lefthook`/`release-it` in `--tools` — we use Husky + Changesets instead.**
+
+### If the target directory already exists
+
+`create-react-native-library` crashes with `ERR_INVALID_ARG_TYPE` when the target directory already exists (even if it is nearly empty). Scaffold to a temporary name, then move:
+
+```bash
+bunx create-react-native-library@latest rn-my-library-tmp \
+  --slug rn-my-library \
+  ... (all other flags) ...
+
+cp -r rn-my-library-tmp/. rn-my-library/
+rm -rf rn-my-library-tmp
+```
 
 ### Interactive fallback
 If non-interactive fails, run without flags and select:
@@ -227,7 +242,7 @@ Add to `package.json` (replaces any generated `.prettierrc`):
 The generated `eslint.config.mjs` uses `@react-native/eslint-config` which requires many peer plugins. Install all of them:
 
 ```bash
-bun add -d \
+bun add -d --ignore-scripts \
   eslint-plugin-eslint-comments \
   eslint-plugin-react \
   eslint-plugin-react-hooks \
@@ -240,9 +255,14 @@ bun add -d \
 
 These are required peers of `@react-native/eslint-config` — without them, `eslint` will fail with "plugin not found" errors.
 
+**Use `--ignore-scripts`** because the `prepare` script (`bob build && husky`) will fail at this point — husky is not installed yet. Use `--ignore-scripts` for all `bun add` calls until after Step 8.
+
 ## Step 7: Changesets Init
 
+Install `@changesets/cli` first — `bunx changeset init` cannot find the binary until the package is installed:
+
 ```bash
+bun add -d --ignore-scripts @changesets/cli
 bunx changeset init
 ```
 
@@ -256,15 +276,10 @@ Edit `.changeset/config.json` — set access to `public`:
 }
 ```
 
-Add `@changesets/cli` to devDependencies:
-```bash
-bun add -d @changesets/cli
-```
-
 ## Step 8: Husky + lint-staged
 
 ```bash
-bun add -d husky@^9 lint-staged
+bun add -d --ignore-scripts husky@^9 lint-staged
 bunx husky init
 ```
 
@@ -374,3 +389,7 @@ This runs typecheck + lint + format:check. All three must pass.
 | `--tools` missing error | Required flag since v0.62 | Pass `--tools eslint jest` |
 | `lib/commonjs` not found | Modern bob uses ESM only | Check for `lib/module` instead |
 | Prompted for `lefthook`/`release-it` | New tool choices in current CLI | Uncheck both — use Husky + Changesets instead |
+| `ERR_INVALID_ARG_TYPE` on scaffold | Target directory already exists | Scaffold to a temp name, then `cp -r tmp/. target/ && rm -rf tmp` |
+| `bun add` fails with "husky: command not found" | `prepare` runs before husky is installed | Use `--ignore-scripts` on all `bun add` calls in Steps 6–8 |
+| `bunx changeset init` → "could not determine executable" | `@changesets/cli` not installed yet | Install `@changesets/cli` first, then run `bunx changeset init` |
+| User asks for `--languages ts` | `--languages` is for native code, not TypeScript | Always use `--languages js` for JS-only; TS is always included |
