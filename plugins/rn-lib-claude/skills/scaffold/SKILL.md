@@ -1,6 +1,6 @@
 ---
 name: scaffold
-description: "Use when creating a new React Native library from scratch — sets up create-react-native-library, bob config, JS-only vs native path, Codegen, Expo example app, peer deps, ESLint, Prettier, Husky, and Changesets."
+description: "Use when creating a new React Native library from scratch — sets up create-react-native-library, bob config, TurboModule / Fabric view (New Architecture) or JS-only library, Expo example app, peer deps, ESLint, Prettier, Husky, and Changesets."
 user_invocable: true
 ---
 
@@ -9,6 +9,8 @@ user_invocable: true
 ## Stack
 `create-react-native-library` + `react-native-builder-bob`, TypeScript strict, ESLint v9, Prettier, Husky + lint-staged, Changesets, Expo example app.
 
+Reference: https://oss.callstack.com/react-native-builder-bob/create
+
 ## Before You Start
 
 ### Prerequisites
@@ -16,16 +18,24 @@ user_invocable: true
 - **Node.js** >= 18
 
 ### Gather from user:
-- **Library name** (e.g. `rn-image-gallery` -> package `@scope/rn-image-gallery`)
+- **Library name** (e.g. `rn-country-picker` → package `@scope/rn-country-picker`)
 - **npm scope** (e.g. `@myorg`) or unscoped
-- **JS-only or native?** JS-only = no android/ios. Native = Codegen + TurboModule/Fabric.
-- **Animations?** If yes, add `react-native-reanimated` + `react-native-gesture-handler` as peer deps.
+- **Type?** See decision guide below.
+- **Animations?** If yes, add `react-native-reanimated` + `react-native-gesture-handler` as peer deps. (native and JS-only)
+
+### Type decision guide
+| I need to... | Use |
+|---|---|
+| Call native platform APIs (camera, sensors, storage, crypto) | `turbo-module` |
+| Expose native business logic or background processing | `turbo-module` |
+| Render a native UI component (map, video player, native picker) | `fabric-view` |
+| Wrap an existing native SDK's view | `fabric-view` |
+| Build UI components, hooks, utilities — no native code | `library` |
+| Country/state/city pickers, formatters, validators, headless logic | `library` |
 
 ## Step 1: Scaffold
 
-### Non-interactive (recommended)
-
-For a **native TurboModule** library:
+For a **TurboModule** (native API/logic):
 ```bash
 bunx create-react-native-library@latest rn-my-library \
   --slug rn-my-library \
@@ -40,9 +50,22 @@ bunx create-react-native-library@latest rn-my-library \
   --tools eslint jest
 ```
 
-For a **Fabric view** library, use `--type fabric-view`.
+For a **Fabric view** (native UI component):
+```bash
+bunx create-react-native-library@latest rn-my-library \
+  --slug rn-my-library \
+  --description "My library description" \
+  --author-name "Author Name" \
+  --author-email "author@example.com" \
+  --author-url "https://github.com/author" \
+  --repo-url "https://github.com/author/rn-my-library" \
+  --type fabric-view \
+  --languages kotlin-objc \
+  --example expo \
+  --tools eslint jest
+```
 
-For a **JS-only** library:
+For a **JS-only library** (TypeScript, no native code):
 ```bash
 bunx create-react-native-library@latest rn-my-library \
   --slug rn-my-library \
@@ -57,19 +80,26 @@ bunx create-react-native-library@latest rn-my-library \
   --tools eslint jest
 ```
 
-### Valid `--type` values
-| Value | Use case |
-|---|---|
-| `turbo-module` | Native module (TurboModule) |
-| `fabric-view` | Native view (Fabric component) |
-| `library` | JS-only, no native code |
+### Flag reference
+| Flag | `turbo-module` | `fabric-view` | `library` |
+|---|---|---|---|
+| `--type` | `turbo-module` | `fabric-view` | `library` |
+| `--languages` | `kotlin-objc` | `kotlin-objc` | `js` |
+| `--example` | `expo` | `expo` | `expo` |
+| `--tools` | `eslint jest` | `eslint jest` | `eslint jest` |
+| Native folders | `android/` `ios/` | `android/` `ios/` | none |
+| Codegen spec | required | required | none |
 
-### Required flags
-- `--tools` is **required** — use `--tools eslint jest` at minimum
-- `--author-url` must be a valid URL (cannot be empty)
+**`--author-url` must be a valid URL (cannot be empty) for all types.**
+**Skip `lefthook`/`release-it` in `--tools` — we use Husky + Changesets instead.**
 
 ### Interactive fallback
-If non-interactive fails, run without flags and select interactively:
+If non-interactive fails, run without flags and select:
+- Type → **TurboModule**, **Fabric view**, or **Library**
+- Languages → **Kotlin & Objective-C** (native) or **JavaScript** (JS-only)
+- Example → **Expo**
+- Tools → **ESLint**, **Jest** (uncheck lefthook, release-it)
+
 ```bash
 bunx create-react-native-library@latest rn-my-library
 ```
@@ -120,11 +150,11 @@ Update the generated `package.json`:
   "files": [
     "src",
     "lib",
-    "android",
-    "ios",
-    "cpp",
-    "*.podspec",
-    "react-native.config.js",
+    "android",          // native only — remove for JS-only library
+    "ios",              // native only — remove for JS-only library
+    "cpp",              // native only — remove for JS-only library
+    "*.podspec",        // native only — remove for JS-only library
+    "react-native.config.js", // native only — remove for JS-only library
     "!ios/build",
     "!android/build",
     "!**/__tests__",
@@ -261,23 +291,51 @@ bun run format
 
 This ensures all files match the tabs + no semicolons + single quotes convention.
 
-## Step 10: Native Path Only — Codegen
+## Step 10: Expo Example App — Dev Client (native only)
 
-If native, the scaffold already adds `codegenConfig` to `package.json`:
+For TurboModule and Fabric view libraries, the example app cannot use Expo Go — it requires a dev client build. After scaffolding:
+
+1. Add `expo-dev-client` to `example/package.json` dependencies:
+   ```bash
+   cd example && bun add expo-dev-client
+   ```
+2. Update the `start` script in `example/package.json`:
+   ```json
+   "start": "expo start --dev-client"
+   ```
+3. Verify `example/metro.config.js` exists with `watchFolders` pointing to the repo root (see `example-app` skill).
+
+JS-only libraries skip this step — they run in Expo Go without modification.
+
+## Step 12: Codegen (native only — skip for JS-only library)
+
+The scaffold adds `codegenConfig` to `package.json` for native types. Verify the `type` field matches:
+
+For **TurboModule**:
 ```json
 "codegenConfig": {
   "name": "RNMyLibrarySpec",
   "type": "modules",
   "jsSrcsDir": "src",
-  "android": {
-    "javaPackageName": "com.mylibrary"
-  }
+  "android": { "javaPackageName": "com.mylibrary" }
 }
 ```
 
-Then read the `codegen` skill for full native implementation details.
+For **Fabric view**:
+```json
+"codegenConfig": {
+  "name": "RNMyLibrarySpec",
+  "type": "components",
+  "jsSrcsDir": "src",
+  "android": { "javaPackageName": "com.mylibrary" }
+}
+```
 
-## Step 11: src/index.ts
+For **JS-only library**: no `codegenConfig` needed. Skip this step entirely.
+
+Read the `codegen` skill for full native implementation details.
+
+## Step 13: src/index.ts
 
 ```ts
 // Export everything public. Nothing else.
@@ -285,7 +343,7 @@ export { MyComponent } from './components/MyComponent'
 export type { MyComponentProps } from './components/MyComponent'
 ```
 
-## Step 12: Verify
+## Step 14: Verify
 
 ```bash
 bun run check
@@ -296,11 +354,13 @@ This runs typecheck + lint + format:check. All three must pass.
 ## Post-Scaffold Checklist
 - [ ] `bun run check` passes clean
 - [ ] `bun run build` produces `lib/` with module + types output
-- [ ] Example app runs (`cd example && bun run ios`)
 - [ ] `.changeset/` directory exists
 - [ ] `.husky/pre-commit` contains `bunx lint-staged`
 - [ ] `prepare` script is `bob build && husky` (not just `husky`)
 - [ ] README.md documents every export
+- [ ] **JS-only:** example app runs in Expo Go (`cd example && bun run start`)
+- [ ] **Native:** `expo-dev-client` in example dependencies, `start` script uses `--dev-client`
+- [ ] **Native:** example app builds (`cd example && bun run ios`)
 
 ## Common Gotchas
 
@@ -313,3 +373,4 @@ This runs typecheck + lint + format:check. All three must pass.
 | `--author-url` error | Empty string passed | Must be a valid URL |
 | `--tools` missing error | Required flag since v0.62 | Pass `--tools eslint jest` |
 | `lib/commonjs` not found | Modern bob uses ESM only | Check for `lib/module` instead |
+| Prompted for `lefthook`/`release-it` | New tool choices in current CLI | Uncheck both — use Husky + Changesets instead |

@@ -271,6 +271,44 @@ Properties that prevent flattening (no need for `collapsable`): `backgroundColor
 
 ---
 
+---
+
+## Expo Support for Native Libraries
+
+Native libraries need `expo-module.config.json` at the repo root so Expo's auto-linking picks them up in managed and bare workflows.
+
+### `expo-module.config.json` (TurboModule)
+```json
+{
+  "platforms": ["apple", "android"],
+  "ios": {
+    "modules": ["RNMyLibModule"]
+  },
+  "android": {
+    "modules": ["com.mylib.MyLibPackage"]
+  }
+}
+```
+
+### `expo-module.config.json` (Fabric view)
+```json
+{
+  "platforms": ["apple", "android"],
+  "ios": {
+    "components": ["MyLibView"]
+  },
+  "android": {
+    "components": ["com.mylib.MyLibView"]
+  }
+}
+```
+
+This file tells Expo which modules/components to auto-link. Without it, users in Expo managed workflow must manually configure `app.json` plugins.
+
+Add `"expo-module.config.json"` to the `files` array in `package.json` so it's included in the published package.
+
+---
+
 ## Rules
 
 - `TurboModuleRegistry.getEnforcing` — never `NativeModules`

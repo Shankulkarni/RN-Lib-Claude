@@ -1,17 +1,17 @@
 <p align="center">
   <h1 align="center">📦 RN-Lib-Claude</h1>
   <p align="center">
-    <strong>Claude Code plugin for building React Native libraries — New Architecture only.</strong>
+    <strong>Claude Code plugin for building and publishing React Native libraries.</strong>
   </p>
   <p align="center">
-    <code>10 skills</code> · <code>7 agents</code> · <code>6 commands</code> · <code>5 scripts</code>
+    <code>3 library types</code> · <code>11 skills</code> · <code>7 agents</code> · <code>7 commands</code> · <code>5 scripts</code>
   </p>
 </p>
 
 <p align="center">
   <a href="https://reactnative.dev"><img src="https://img.shields.io/badge/React_Native-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React Native"></a>
   <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://callstack.github.io/react-native-builder-bob"><img src="https://img.shields.io/badge/Builder_Bob-000000?style=flat-square&logo=npm&logoColor=white" alt="Builder Bob"></a>
+  <a href="https://oss.callstack.com/react-native-builder-bob/create"><img src="https://img.shields.io/badge/Builder_Bob-000000?style=flat-square&logo=npm&logoColor=white" alt="Builder Bob"></a>
   <a href="https://docs.swmansion.com/react-native-reanimated"><img src="https://img.shields.io/badge/Reanimated_v3-6B52AE?style=flat-square&logo=react&logoColor=white" alt="Reanimated v3"></a>
   <a href="https://docs.swmansion.com/react-native-gesture-handler"><img src="https://img.shields.io/badge/Gesture_Handler_v2-6B52AE?style=flat-square&logo=react&logoColor=white" alt="Gesture Handler v2"></a>
   <a href="https://github.com/changesets/changesets"><img src="https://img.shields.io/badge/Changesets-26A69A?style=flat-square&logo=npm&logoColor=white" alt="Changesets"></a>
@@ -38,23 +38,38 @@
 
 ---
 
+## 📚 Library Types
+
+Three types, one plugin. Pick the right one at scaffold time — the plugin handles the rest.
+
+| Type | Use when | Expo Go | Native code |
+|---|---|---|---|
+| `turbo-module` | Calling native platform APIs — camera, sensors, crypto, storage | ❌ Dev client | ✅ Kotlin + ObjC++ |
+| `fabric-view` | Rendering a native UI component — maps, video players, native pickers | ❌ Dev client | ✅ Kotlin + ObjC++ |
+| `library` | Pure TypeScript — pickers, hooks, utilities, formatters | ✅ Yes | ❌ None |
+
+All three use: TypeScript strict · `react-native-builder-bob` · ESLint v9 · Prettier · Husky · Changesets · Expo example app.
+
+---
+
 ## 🧠 Skills
 
 Loaded on-demand. Only the relevant skill enters context — the rest cost 0 tokens.
 
-| | Skill | What it teaches |
+| | Skill | What it covers |
 |---|---|---|
-| 🏗️ | `scaffold` | Full library scaffolding — create-react-native-library + bob config |
-| 🧩 | `component` | Fabric-compatible UI components, ref forwarding, compound patterns |
+| 🏗️ | `scaffold` | Full library setup — create-react-native-library, bob config, Expo dev client, Changesets, Husky |
+| 🧩 | `component` | Fabric-compatible UI components, ref forwarding, compound patterns, a11y |
 | 🪝 | `hooks` | Custom hooks, worklet-safe utilities, stable callbacks |
 | ✨ | `animations` | Reanimated v3 worklets, GestureDetector, GPU-only properties |
-| 📐 | `typescript` | Strict config, moduleResolution: bundler, exports map, peer dep types |
+| 📐 | `typescript` | Strict config, `moduleResolution: bundler`, exports map, peer dep types |
 | 🧪 | `testing` | Jest + React Native Testing Library, Reanimated mocks, Codegen mocks |
 | 🚀 | `publish` | Changesets workflow, semver, bob build validation, npm publish |
-| ⚙️ | `codegen` | TurboModules + Fabric native views, Codegen TypeScript specs |
-| 📱 | `example-app` | Expo example app, SDK 52+, demo patterns |
+| ⚙️ | `codegen` | TurboModules, Fabric views, Codegen TypeScript specs, `expo-module.config.json` |
+| 📱 | `example-app` | Expo SDK 52+, Expo Go vs dev client, demo patterns, metro config |
 | ⚡ | `performance` | Bundle size, memoization, FlashList, FPS targets |
-| 🧹 | `deslop` | Legacy bridge APIs, console.log in worklets, hardcoded values |
+| 🧹 | `deslop` | Legacy bridge APIs, `console.log` in worklets, hardcoded values |
+| 🗂️ | `directory` | Submit to reactnative.directory — entry format, CLI, manual PR |
 
 ---
 
@@ -72,7 +87,7 @@ Loaded on-demand. Only the relevant skill enters context — the rest cost 0 tok
 ║  Hooks Developer             🎛️  ORCHESTRATION                       ║
 ║                              ────────────────                        ║
 ║  ✅ QUALITY                  Orchestrator                            ║
-║  ────────                    (full lifecycle)                         ║
+║  ────────                    (full lifecycle)                        ║
 ║  Code Reviewer                                                       ║
 ║  Publisher                                                           ║
 ║                                                                      ║
@@ -82,7 +97,7 @@ Loaded on-demand. Only the relevant skill enters context — the rest cost 0 tok
 | | Agent | Role |
 |---|---|---|
 | 🎯 | `orchestrator` | Coordinates full library lifecycle — scaffold to publish |
-| 🏛️ | `library-architect` | API surface design, peer dep strategy |
+| 🏛️ | `library-architect` | Type selection (TurboModule / Fabric view / JS-only), API surface design, peer deps |
 | 🧩 | `component-developer` | UI components, animations, gestures |
 | 🪝 | `hooks-developer` | Headless hooks, worklet-safe utilities |
 | ⚙️ | `codegen-engineer` | TurboModules + Fabric native views |
@@ -100,22 +115,37 @@ Type these directly in Claude Code:
 | `/rn-lib-claude:setup` | 🔧 One-time: copies conventions to `~/.claude/CLAUDE.md` |
 | `/rn-lib-claude:update` | 🔄 Updates plugin + refreshes CLAUDE.md conventions |
 | `/rn-lib-claude:uninstall` | 🗑️ Removes conventions from CLAUDE.md |
-| `/rn-lib-claude:scaffold` | 🏗️ Scaffold a new React Native library |
-| `/rn-lib-claude:publish` | 🚀 Pre-publish checks + npm publish |
+| `/rn-lib-claude:scaffold` | 🏗️ Scaffold a new library — picks type, sets up everything |
+| `/rn-lib-claude:publish` | 🚀 Pre-publish checks + npm publish + optional directory submission |
 | `/rn-lib-claude:deslop` | 🧹 Scan for anti-patterns and New Architecture violations |
+| `/rn-lib-claude:directory` | 🗂️ Submit published library to reactnative.directory |
 
 ```
-  /rn-lib-claude:deslop      ← you type this
+  /rn-lib-claude:scaffold     ← you type this
        │
        ▼
-  commands/deslop.md          ← agent reads the playbook
+  commands/scaffold.md         ← picks TurboModule / Fabric view / JS-only
        │
        ▼
-  scripts/deslop.sh           ← bash does the work (0 tokens)
+  skills/scaffold/SKILL.md     ← full setup playbook
        │
        ▼
-  Report + fix offers         ← agent interprets, you decide
+  Library ready to code        ← bob · Changesets · Husky · Expo example app
 ```
+
+---
+
+## 🔌 Expo Support
+
+| Library type | Expo Go | Dev client | Config plugin |
+|---|---|---|---|
+| `turbo-module` | ❌ | ✅ Required | Optional (`app.plugin.js`) |
+| `fabric-view` | ❌ | ✅ Required | Optional (`app.plugin.js`) |
+| `library` (JS-only) | ✅ Works | Not needed | Not needed |
+
+- All example apps use **Expo SDK 52+** with `newArchEnabled: true`
+- Native libraries get `expo-dev-client` added to example dependencies automatically
+- Native libraries get `expo-module.config.json` for Expo managed workflow auto-linking
 
 ---
 
@@ -159,7 +189,7 @@ rn-lib-claude/
 │   ├── codegen-engineer.md
 │   ├── publisher.md
 │   └── code-reviewer.md
-├── skills/                  ← 10 on-demand skills
+├── skills/                  ← 11 on-demand skills
 │   ├── scaffold/
 │   ├── component/
 │   ├── hooks/
@@ -170,14 +200,16 @@ rn-lib-claude/
 │   ├── codegen/
 │   ├── example-app/
 │   ├── performance/
-│   └── deslop/
-├── commands/                ← Slash commands
+│   ├── deslop/
+│   └── directory/
+├── commands/                ← 7 slash commands
 │   ├── setup.md
 │   ├── update.md
 │   ├── uninstall.md
 │   ├── scaffold.md
 │   ├── publish.md
-│   └── deslop.md
+│   ├── deslop.md
+│   └── directory.md
 └── scripts/                 ← Pure bash tooling (0 tokens)
     ├── setup.sh
     ├── teardown.sh

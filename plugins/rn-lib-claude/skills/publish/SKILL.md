@@ -40,6 +40,10 @@ git push --tags
 ```
 Create GitHub release with CHANGELOG.md section as body.
 
+### 6. Submit to React Native Directory (optional)
+If this is the first publish, submit to https://reactnative.directory for discoverability.
+Run `/rn-lib-claude:directory` or use the `directory` skill directly.
+
 ## Pre-Publish Checklist
 
 Run `/publish` command — it runs `scripts/pre-publish.sh` automatically.

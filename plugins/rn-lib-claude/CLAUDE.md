@@ -13,6 +13,7 @@ These rules apply to every React Native library in this ecosystem.
 | TypeScript config, exports, peer deps | `typescript` |
 | Writing tests | `testing` |
 | Publishing to npm | `publish` |
+| Submitting to React Native Directory | `directory` |
 | Native modules or Fabric views | `codegen` |
 | Working on the example app | `example-app` |
 | List components, bundle size, FPS, memoization | `performance` |

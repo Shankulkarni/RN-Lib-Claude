@@ -16,5 +16,8 @@ If pre-publish passes:
 4. Run `npm publish --access public`
 5. Run `git tag v{version} && git push --tags`
 6. Remind user to create GitHub release with CHANGELOG section
+7. Ask: **"Do you want to submit this library to the React Native Directory (reactnative.directory)?"**
+   - Yes → run `/rn-lib-claude:directory`
+   - No → done
 
 If pre-publish fails, list each failure with fix instructions. Do not proceed to publish.

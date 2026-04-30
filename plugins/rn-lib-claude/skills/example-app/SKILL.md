@@ -1,11 +1,21 @@
 ---
 name: example-app
-description: "Use when working on the Expo example app inside a React Native library repo — demo patterns, Expo SDK 52+, Expo Go compatibility, and testing the library in a real app context."
+description: "Use when working on the Expo example app inside a React Native library repo — demo patterns, Expo SDK 52+, dev client vs Expo Go, metro config for local resolution, and testing the library in a real app context."
 ---
 
 # Example App
 
-Every library ships with an Expo example app in `example/`. Expo SDK 52+, Expo Go compatible.
+Every library ships with an Expo example app in `example/`. Expo SDK 52+, `newArchEnabled: true` always.
+
+## Expo Go vs Dev Client — Know This First
+
+| Library type | Runs in Expo Go? | How to run |
+|---|---|---|
+| JS-only (`--type library`) | ✅ Yes | `expo start` → scan QR |
+| TurboModule (`--type turbo-module`) | ❌ No — needs native code | `expo run:ios` / `expo run:android` |
+| Fabric view (`--type fabric-view`) | ❌ No — needs native code | `expo run:ios` / `expo run:android` |
+
+Native libraries require a **dev client** build. Expo Go cannot load custom native modules.
 
 ## Structure
 
@@ -17,6 +27,7 @@ example/
 ├── components/           ← demo-only components
 ├── app.json
 ├── package.json
+├── metro.config.js       ← required for native libraries
 └── tsconfig.json
 ```
 
@@ -36,10 +47,11 @@ example/
 }
 ```
 
-**`newArchEnabled: true` always** — example app must run on New Architecture.
+**`newArchEnabled: true` always** — no exceptions.
 
 ## `package.json` (example)
 
+### JS-only library
 ```json
 {
   "name": "my-lib-example",
@@ -58,6 +70,50 @@ example/
   }
 }
 ```
+
+### Native library (TurboModule or Fabric view)
+```json
+{
+  "name": "my-lib-example",
+  "private": true,
+  "scripts": {
+    "start": "expo start --dev-client",
+    "ios": "expo run:ios",
+    "android": "expo run:android"
+  },
+  "dependencies": {
+    "expo": "~52.0.0",
+    "expo-dev-client": "~4.0.0",
+    "expo-router": "~4.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.x",
+    "my-lib": "file:../"
+  }
+}
+```
+
+`expo-dev-client` enables running custom native code without ejecting. Always include it for native libraries.
+
+## Metro Config (native libraries — required)
+
+`example/metro.config.js`:
+```js
+const { getDefaultConfig } = require('expo/metro-config')
+const path = require('path')
+
+const config = getDefaultConfig(__dirname)
+const root = path.resolve(__dirname, '..')
+
+config.watchFolders = [root]
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, 'node_modules'),
+  path.resolve(root, 'node_modules'),
+]
+
+module.exports = config
+```
+
+Without this, Metro cannot resolve the local `file:../` library on native builds.
 
 ## Demo Screen Pattern
 
@@ -102,45 +158,38 @@ const styles = StyleSheet.create({
 })
 ```
 
+## Running
+
+### JS-only library
+```bash
+cd example && bun install
+bun run start   # scan QR with Expo Go
+```
+
+### Native library
+```bash
+cd example && bun install
+bun run ios     # builds native + launches simulator
+bun run android # builds native + launches emulator
+```
+
+First native build is slow (CocoaPods install + Gradle). Subsequent builds are fast.
+
 ## Rules
 
 - Demo **every exported component and hook** — no hidden APIs
 - Show **variants**, **edge cases**, and **interactive examples**
-- Use `file:../` to reference local library — never publish example with a versioned dep
+- Use `file:../` to reference local library — never a versioned dep
 - Keep example app **simple** — no extra state management, no network calls
 - `newArchEnabled: true` always in `app.json`
-- Example must run on **Expo Go** (no custom native modules unless library requires it)
-
-## Metro Config
-
-If library has native code, add to `example/metro.config.js`:
-```js
-const { getDefaultConfig } = require('expo/metro-config')
-const path = require('path')
-
-const config = getDefaultConfig(__dirname)
-const root = path.resolve(__dirname, '..')
-
-config.watchFolders = [root]
-config.resolver.nodeModulesPaths = [
-  path.resolve(__dirname, 'node_modules'),
-  path.resolve(root, 'node_modules'),
-]
-
-module.exports = config
-```
-
-## Running
-
-```bash
-cd example
-bun install
-bun run ios     # or android
-```
+- JS-only libraries must work in Expo Go (no native deps)
+- Native libraries must include `expo-dev-client`
+- Metro config required for all native libraries
 
 ## Checklist
 - [ ] Every export has a demo
 - [ ] `newArchEnabled: true` in `app.json`
-- [ ] Runs on Expo Go (if JS-only library)
-- [ ] Metro config set up for local library resolution
+- [ ] JS-only: runs in Expo Go
+- [ ] Native: `expo-dev-client` in dependencies, `start` script uses `--dev-client`
+- [ ] Native: Metro config set up for local library resolution
 - [ ] No hardcoded data that should be props

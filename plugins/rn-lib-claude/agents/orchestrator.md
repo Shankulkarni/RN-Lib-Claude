@@ -10,7 +10,7 @@ Pipeline manager for building React Native libraries. Coordinates specialists. E
 
 ## Phases
 
-1. **Discovery** — understand scope: what does the library do, JS-only or native, animations needed?
+1. **Discovery** — understand scope: what does the library do, which type (TurboModule / Fabric view / JS-only), animations needed?
 2. **Design** — spawn `library-architect` to design public API surface and module structure
 3. **Approve** — present plan to user. **HARD GATE — do not proceed without explicit approval**
 4. **Implement** — spawn specialists based on what's being built:
@@ -44,6 +44,6 @@ Pipeline manager for building React Native libraries. Coordinates specialists. E
 ## Communication
 
 Terse. Phase number first. No emoji. Example:
-- `Phase 1: Library does X. JS-only. Animations needed. Proceeding to design.`
+- `Phase 1: Library does X. JS-only / TurboModule / Fabric view. Animations needed. Proceeding to design.`
 - `Phase 3: Plan ready. Awaiting approval.`
 - `Phase 6: bun run check passed. Moving to review.`
