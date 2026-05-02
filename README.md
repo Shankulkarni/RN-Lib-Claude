@@ -250,7 +250,9 @@ Uses Claude Code's native plugin system. No custom scripts needed.
 # 2. Install the plugin
 /plugin install rn-lib-claude@shankulkarni
 
-# 3. Run setup in Claude Code
+# 3. Restart Claude Code (required after plugin install)
+
+# 4. Run setup in Claude Code
 /rn-lib-claude:setup
 ```
 
